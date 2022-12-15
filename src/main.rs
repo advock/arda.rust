@@ -21,10 +21,18 @@ async fn main() {
     let contract = Contract::new(address, abi, provider_service);
     println!("connected contracts");
 
-    let id: u128 = 359947;
+    let id = 359947;
 
-    let (tick, sqrtPriceX96, liquidity, tickLower, tickUpper, token0, token1) = contract
-        .method::<_, (i128, i128, i128, i128, i128, Address, Address)>("Position", id)
+    let (tick, sqrtPriceX96, liquidity, tickLower, tickUpper, token0, token1): (
+        u128,
+        u128,
+        u128,
+        u128,
+        u128,
+        Address,
+        Address,
+    ) = contract
+        .method::<_, _>("Position", id as u128)
         .unwrap()
         .call()
         .await
