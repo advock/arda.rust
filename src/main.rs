@@ -1,3 +1,4 @@
+use cronjob::CronJob;
 use ethers::prelude::account::TokenQueryOption;
 use ethers::signers::LocalWallet;
 use ethers::{
@@ -9,69 +10,76 @@ use std::convert::TryFrom;
 mod contractABI;
 use ethers::{abi::Abi, contract::Contract, types::Address};
 mod addresses;
-
+use tokio::time::{self, Duration};
 #[tokio::main]
+
 async fn main() {
-    let provider_service = Provider::<Http>::try_from(
-        "https://eth-goerli.g.alchemy.com/v2/kH74ovyVPFoFpi-ddofXYKhlVow_uy_S",
-    )
-    .expect("fail");
-    let abi_original: String = contractABI::abi();
-    let abi: Abi = serde_json::from_str(&abi_original).expect("fed");
-    let address: Address = (addresses::add()).iAdd;
-
-    let contract = Contract::new(address, abi, provider_service);
-    println!("connected contracts");
-
-    let tokenId = 359947;
-
-    let (tick, sqrtPriceX96, liquidity, tickLower, tickUpper, token0, token1): (
-        u128,
-        u128,
-        u128,
-        u128,
-        u128,
-        Address,
-        Address,
-    ) = contract
-        .method::<_, _>("Position", tokenId as u128)
-        .unwrap()
-        .call()
-        .await
-        .expect("fail");
-
-    if cal(
-        tokenId,
-        tick,
-        sqrtPriceX96,
-        liquidity,
-        tickLower,
-        tickUpper,
-        token0,
-        token1,
-    ) {
+    let mut interval = time::interval(Duration::from_millis(10));
+    loop {
+        interval.tick().await;
         let provider_service = Provider::<Http>::try_from(
-            "https://eth-mainnet.g.alchemy.com/v2/XQaS9eHZxXvAmb-lzIWBfqSe1lx1Aims",
+            "https://eth-goerli.g.alchemy.com/v2/kH74ovyVPFoFpi-ddofXYKhlVow_uy_S",
         )
         .expect("fail");
-
-        let private_KEY = "dbdhbfhbdfhbdhfbchbcjdshbdhbdhbhdbhjb";
-        let wallet: LocalWallet = private_KEY.parse().expect("fail");
-
         let abi_original: String = contractABI::abi();
         let abi: Abi = serde_json::from_str(&abi_original).expect("fed");
         let address: Address = (addresses::add()).iAdd;
-        let provider = SignerMiddleware::new(provider_service, wallet);
 
-        let contract = Contract::new(address, abi, provider);
+        let contract = Contract::new(address, abi, provider_service);
         println!("connected contracts");
 
-        let call: bool = contract
-            .method::<_, _>("wid", tokenId as u128)
+        let tokenId = 359947;
+
+        let (tick, sqrtPriceX96, liquidity, tickLower, tickUpper, token0, token1): (
+            u128,
+            u128,
+            u128,
+            u128,
+            u128,
+            Address,
+            Address,
+        ) = contract
+            .method::<_, _>("Position", tokenId as u128)
             .unwrap()
             .call()
             .await
             .expect("fail");
+
+        if cal(
+            tokenId,
+            tick,
+            sqrtPriceX96,
+            liquidity,
+            tickLower,
+            tickUpper,
+            token0,
+            token1,
+        ) {
+            let provider_service = Provider::<Http>::try_from(
+                "https://eth-mainnet.g.alchemy.com/v2/XQaS9eHZxXvAmb-lzIWBfqSe1lx1Aims",
+            )
+            .expect("fail");
+
+            let private_KEY = "dbdhbfhbdfhbdhfbchbcjdshbdhbdhbhdbhjb";
+            let wallet: LocalWallet = private_KEY.parse().expect("fail");
+
+            let abi_original: String = contractABI::abi();
+            let abi: Abi = serde_json::from_str(&abi_original).expect("fed");
+            let address: Address = (addresses::add()).iAdd;
+            let provider = SignerMiddleware::new(provider_service, wallet);
+
+            let contract = Contract::new(address, abi, provider);
+            println!("connected contracts");
+
+            let call: bool = contract
+                .method::<_, _>("wid", tokenId as u128)
+                .unwrap()
+                .call()
+                .await
+                .expect("fail");
+
+            break;
+        }
     }
 }
 
